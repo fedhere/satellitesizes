@@ -13,8 +13,8 @@ TIMESCALE = 1000 #days
 planets={}
 planets['earth']={'a':1,'r1':6378.1,'r2':6356.8,'dens':5.515,'mag':2.3,'albedo':0.367, 'color':'#6666FF'}
 planets['mars']={'a':1.5,'r1':3396.2,'r2':3376.2,'dens':3.9335,'mag':2.3,'albedo':0.17, 'color':'#cc0000'         }
-planets['jupiter']={'a':5.2,'r1':71492,'r2':66854,'dens':1.326,'mag':2.3,'albedo':0.343, 'color':'#FFFF00'}
-planets['saturn']={'a':9.5,'r1':60268,'r2':54364,'dens':0.687,'mag':1.1,'albedo':0.47, 'color':"#FF9900"}
+planets['jupiter']={'a':5.2,'r1':71492,'r2':66854,'dens':1.326,'mag':2.3,'albedo':0.343, 'color':"#FF9900"}
+planets['saturn']={'a':9.5,'r1':60268,'r2':54364,'dens':0.687,'mag':1.1,'albedo':0.47, 'color':'#FFCC00'}
 planets['uranus']={'a':19.6,'r1':25559,'r2':24973,'dens':1.27,'mag':5.6,'albedo':0.51, 'color':'#000099'}
 planets['neptune']={'a':30.1,'r1':24764 ,'r2':24341 ,'dens':1.638 ,'mag': 7.91,'albedo':0.41, 'color':'#0099FF'}
 planets['pluto']={'a':39.264 ,'r1':1153,'r2':1153,'dens':2.03,'mag':15,'albedo':0.59, 'color':'#003333'}
@@ -81,6 +81,8 @@ class satellite:
             ax.text(self.hosta-0.2,-9, self.host, fontsize=12, rotation='vertical', verticalalignment='bottom', horizontalalignment='center', color=self.color)
         elif 'mars' in self.host:
             ax.text(self.hosta+0.2,-9, self.host, fontsize=12, rotation='vertical', verticalalignment='bottom', horizontalalignment='center', color=self.color)
+        elif 'pluto' in self.host:
+            ax.text(self.hosta+0.2,-9, "("+self.host+")", fontsize=12, rotation='vertical', verticalalignment='bottom', horizontalalignment='center', color=self.color)
         else:
             ax.text(self.hosta,-9, self.host, fontsize=12, rotation='vertical', verticalalignment='bottom', horizontalalignment='center', color=self.color)
         ax.scatter(self.hosta,0, facecolor='none',edgecolor='k', s=0.1*(0.5*(planets[self.host]['r1']+planets[self.host]['r2'])), alpha = 0.1)
@@ -222,14 +224,20 @@ if __name__=='__main__':
 
 #    pl.ion()
     for s in sats.iterkeys():
-        print sats[s].name, sats[s].host, sats[s].a
+        print sats[s].name, sats[s].host, sats[s].radius#, sats[s].a
         sats[s].theta=random.uniform(0,TWOPI)
 #    TIMESCALE=30
     for t in range(0,TIMESCALE):
-
-        print "t, theta",t,
+#        print "t, theta",t
+        pl.clf()
+        fig = pl.figure()
+        ax1 = fig.add_subplot(211)
+        pl.xlabel (" ")
+        pl.ylabel (" ")
+        ax2 = fig.add_subplot(212)
         pl.xlabel ("host semimajos axis (AU)")
         pl.ylabel (" ")
+        
         
         ax1.set_xlim(-25, 55)
         ax2.set_xlim(-25, 55)
@@ -247,7 +255,7 @@ if __name__=='__main__':
         
         pl.savefig("satellites.%04d.png"%t)
     os.system("convert -loop -1 satellites.????.png satellites.gif")
-    os.system("rm satellites.????.pmg")
+    os.system("rm satellites.????.png")
 
-    pl.show()
+#    pl.show()
 #    time.sleep(10)
