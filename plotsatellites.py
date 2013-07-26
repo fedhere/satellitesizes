@@ -1,15 +1,12 @@
 # coding=utf-8
-import os,sys,time
-from numpy import loadtxt,sin,cos, random,log10,pi,array
+import os,sys,time,optparse
+from numpy import loadtxt,sin,cos, random,log10,pi,array,arange
 from matplotlib.patches import Ellipse
 TWOPI = 2.0*pi
 PIon2 = pi*0.5
 
 
-
-
-
-TIMESCALE = 1000 #days
+DEBUG=False
 planets={}
 planets['earth']={'a':1,'r1':6378.1,'r2':6356.8,'dens':5.515,'mag':2.3,'albedo':0.367, 'color':'#6666FF'}
 planets['mars']={'a':1.5,'r1':3396.2,'r2':3376.2,'dens':3.9335,'mag':2.3,'albedo':0.17, 'color':'#cc0000'         }
@@ -18,15 +15,12 @@ planets['saturn']={'a':9.5,'r1':60268,'r2':54364,'dens':0.687,'mag':1.1,'albedo'
 planets['uranus']={'a':19.6,'r1':25559,'r2':24973,'dens':1.27,'mag':5.6,'albedo':0.51, 'color':'#000099'}
 planets['neptune']={'a':30.1,'r1':24764 ,'r2':24341 ,'dens':1.638 ,'mag': 7.91,'albedo':0.41, 'color':'#0099FF'}
 planets['pluto']={'a':39.264 ,'r1':1153,'r2':1153,'dens':2.03,'mag':15,'albedo':0.59, 'color':'#003333'}
-#colors={'mars':'#cc0000','earth':'#6666FF', 'jupiter':'#FFFF00','saturn':"#FF9900",'uranus':'#000099', 'neptune':'#0099FF', 'pluto':'#003333'}
 
+HEXDIG = '0123456789abcdefABCDEF'
+HEXDEC = {v: int(v, 16) for v in (x+y for x in HEXDIG for y in HEXDIG)}
 
-_NUMERALS = '0123456789abcdefABCDEF'
-_HEXDEC = {v: int(v, 16) for v in (x+y for x in _NUMERALS for y in _NUMERALS)}
-LOWERCASE, UPPERCASE = 'x', 'X'
-
-def rgb(triplet):
-    return (_HEXDEC[triplet[0:2]]/256., _HEXDEC[triplet[2:4]]/256., _HEXDEC[triplet[4:6]]/256.)
+def rgb(rgbt):
+    return (HEXDEC[rgbt[0:2]]/256., HEXDEC[rgbt[2:4]]/256., HEXDEC[rgbt[4:6]]/256.)
 
 
 
@@ -38,7 +32,6 @@ class satellite:
         self.attributes=['GM', 'GMerr', 'radius', 'raderr', 'dens', 'denserr', 'mag', 'magerr', 'albedo', 'alberr']
         self.readsatelliteline(line)
         self.color = rgb(planets[self.host]['color'].replace('#',''))
-        print planets[self.host]['color'].replace('#',''),self.color
         self.a=300.0
         self.period=0.
         self.theta=0.0
@@ -46,10 +39,10 @@ class satellite:
     def printsat(self):
         print "Satellite: ",self.name,
         print " d: ",self.a, "period: ",self.period,
-        print " gm: ",self.GM, "+/-", self.GMerr,
-        print " radius: ",self.radius, "+/-", self.raderr,
-        print " density: ",self.dens, "+/-", self.denserr,
-        print " magnitude: ",self.mag, "+/-", self.magerr,
+        print " gm: ",self.GM, "+/-", self.GMerr
+        print " \t\tradius: ",self.radius, "+/-", self.raderr,
+        print " density: ",self.dens, "+/-", self.denserr
+        print " \t\tmagnitude: ",self.mag, "+/-", self.magerr,
         print " albedo: ",self.albedo, "+/-", self.alberr
 
     def printsystem(self,host):
@@ -67,9 +60,7 @@ class satellite:
         dt*=TWOPI
         theta = self.theta+dt
         theta = theta%TWOPI
-#        print self.period,t,dt,theta
-#        if 'earth' in self.host : print theta
-#        print self.a, theta, sin(theta)
+
         if self.a > 0:
             dx =0.000001*self.a*abs(sin(theta))
             y = 0.000001*self.a*abs(cos(theta))
@@ -90,18 +81,9 @@ class satellite:
         if size=='radius':
             ax.plot(self.hosta+dx, y,'o',markersize=log10(self.radius)*10,markerfacecolor=self.color,alpha=(26.0-self.mag)/26)
             ax.plot([self.hosta, self.hosta+dx], [0,y], 'k-',alpha=0.1)
-#            e = Ellipse(xy=( self.hosta+dx, y), width=log10(self.radius),height=log10(self.radius), angle=0)
         elif size=='ratio':
-#            print self.sizeratio
             ax.plot(self.hosta+dx, y,'o',markersize=self.sizeratio*100,markerfacecolor=self.color,alpha=(26.0-self.mag)/26)
             ax.plot([self.hosta, self.hosta+dx], [0,y], 'k-',alpha=0.1)
-#            e = Ellipse(xy=( self.hosta+dx, y), width=log10(self.sizeratio),height=log10(self.sizeratio), angle=0)            
-            
-#       ax.add_artist(e)
- #      e.set_clip_box(ax.bbox)
-     #  e.set_alpha((26.0-self.mag)/26)
-   #    e.set_facecolor(self.color)
-#        pl.draw()
             
     def readsatelliteline(self,line):
         line=line.split()
@@ -182,7 +164,51 @@ class satellite:
 
                 
 if __name__=='__main__':
+
+    parser = optparse.OptionParser(usage="python plotsatellites.py  ", conflict_handler="resolve")
+    parser.add_option('-d','--days', default=1000, type="float",
+                      help='days for the timeline of the visualization')
+    parser.add_option('-t','--steps', default=1, type="float",
+                      help='step (in days) for the timeline of the visualization')
+    parser.add_option('-i','--interactive', default=False ,action="store_true" ,
+                      help='show plots as they are made') 
+
+    parser.add_option('-p','--printall', default=False ,action="store_true" ,
+                      help='prints systems characteristics') 
+    parser.add_option('-e','--earth', default=False ,action="store_true" ,
+                      help='prints earth system characteristics')
+    parser.add_option('-m','--mars', default=False, action="store_true" ,
+                      help='prints mars system characteristics')
+    parser.add_option('-j','--jupiter', default=False, action="store_true" ,
+                      help='prints jupiter system characteristics')
+    parser.add_option('-s','--saturn', default=False ,action="store_true" ,
+                      help='prints saturn system characteristics')
+    parser.add_option('-n','--neptune', default=False ,action="store_true" ,
+                      help='prints neptune system characteristics')
+    parser.add_option('-l','--pluto', default=False, action="store_true" ,
+                      help='prints pluto system characteristics')
+    parser.add_option('--debug', default=False, action="store_true" ,
+                      help='debug statements are printed')
+
+    options,  args = parser.parse_args()
+
+
+    if len(args)!=0 :
+        sys.argv.append('--help')    
+        options,  args = parser.parse_args()
+        sys.exit(0)
+    
+    DEBUG = options.debug
+
+    timescale = options.days
+    timestep = options.steps
     filein = "satellitelist"
+    filein2= "satellitelist2"
+    if DEBUG: 
+        print "timescale : ",timescale,"days"
+        print "timestep  : ",timestep,"days"
+        print "inputfiles :", filein, filein2
+
     allplanets={"Martian":'mars',"Earth's":'earth',"Jovian":'jupiter',"Saturnian":'saturn',"Uranian":"uranus","Neptunian":"neptune","Pluto's":'pluto'}
 
     
@@ -198,7 +224,7 @@ if __name__=='__main__':
         name=l.split()[0].lower()
         sats[name]=satellite(name,host,l)
             
-    f=open("satellitelist2")
+    f=open(filein2)
     for l in f:
         l=l.strip().split()
         if l:
@@ -206,7 +232,8 @@ if __name__=='__main__':
             name=l[1].lower()
             if name in sats.keys():
                 if not host == sats[name].host:
-                    print "host and satellite pair wtong: ",name,host, "is not :",sats[name].name,sats[name].host
+                    if DEBUG:
+                        print "host and satellite pair wrong: ",name,host, "is not :",sats[name].name,sats[name].host
                     continue
                 attind = 3
                 if l[attind].startswith("±"):
@@ -215,22 +242,59 @@ if __name__=='__main__':
                 sats[name].period=float(l[attind+1].replace(',',''))
 
     for host in allplanets.itervalues():
-        print "host: ",host, "a: ",planets[host]['a'],"r: ",(planets[host]['r1']+planets[host]['r2'])*0.5,
-        print "dens: ",planets[host]['dens'], "mag: ",planets[host]['mag'], "albedo: ",planets[host]['albedo']
-        for s in sats.iterkeys():
-            sats[s].printsystem(host)
+        if options.printall or DEBUG:
+            print "Host: ",host, "a: ",planets[host]['a'],"(AU) mean radius: ",(planets[host]['r1']+planets[host]['r2'])*0.5,
+            print "dens: ",planets[host]['dens'], "mag: ",planets[host]['mag'], "albedo: ",planets[host]['albedo']
+            for s in sats.iterkeys():
+                sats[s].printsystem(host)
+        elif options.earth and host == 'earth':
+                print "host: ",host, "a: ",planets[host]['a'],"r: ",(planets[host]['r1']+planets[host]['r2'])*0.5,
+                print "dens: ",planets[host]['dens'], "mag: ",planets[host]['mag'], "albedo: ",planets[host]['albedo']  
+                for s in sats.iterkeys():
+                    sats[s].printsystem(host)
+
+        elif options.mars and host == 'mars':
+                print "host: ",host, "a: ",planets[host]['a'],"r: ",(planets[host]['r1']+planets[host]['r2'])*0.5,
+                print "dens: ",planets[host]['dens'], "mag: ",planets[host]['mag'], "albedo: ",planets[host]['albedo']  
+                for s in sats.iterkeys():
+                    sats[s].printsystem(host)
+        elif options.jupiter and host == 'jupiter':
+                print "host: ",host, "a: ",planets[host]['a'],"r: ",(planets[host]['r1']+planets[host]['r2'])*0.5,
+                print "dens: ",planets[host]['dens'], "mag: ",planets[host]['mag'], "albedo: ",planets[host]['albedo']  
+                for s in sats.iterkeys():
+                    sats[s].printsystem(host)
+        elif options.saturn and host == 'saturn':
+                print "host: ",host, "a: ",planets[host]['a'],"r: ",(planets[host]['r1']+planets[host]['r2'])*0.5,
+                print "dens: ",planets[host]['dens'], "mag: ",planets[host]['mag'], "albedo: ",planets[host]['albedo']  
+                for s in sats.iterkeys():
+                    sats[s].printsystem(host)
+        elif options.neptune and host == 'neptune':
+                print "host: ",host, "a: ",planets[host]['a'],"r: ",(planets[host]['r1']+planets[host]['r2'])*0.5,
+                print "dens: ",planets[host]['dens'], "mag: ",planets[host]['mag'], "albedo: ",planets[host]['albedo']  
+                for s in sats.iterkeys():
+                    sats[s].printsystem(host)
+        elif options.pluto and host == 'pluto':
+                print "host: ",host, "a: ",planets[host]['a'],"r: ",(planets[host]['r1']+planets[host]['r2'])*0.5,
+                print "dens: ",planets[host]['dens'], "mag: ",planets[host]['mag'], "albedo: ",planets[host]['albedo']  
+                for s in sats.iterkeys():
+                    sats[s].printsystem(host)
+
 
     import pylab as pl
+    if options.interactive:
+        pl.ion()
 
-#    pl.ion()
     for s in sats.iterkeys():
-        print sats[s].name, sats[s].host, sats[s].radius#, sats[s].a
         sats[s].theta=random.uniform(0,TWOPI)
-#    TIMESCALE=30
-    for t in range(0,TIMESCALE):
-#        print "t, theta",t
+
+    fig = pl.figure()
+    for t in arange(0,timescale, timestep):
+        if DEBUG:
+            print "plotting day ",t
+        if not options.interactive:
+            fig = pl.figure()
+
         pl.clf()
-        fig = pl.figure()
         ax1 = fig.add_subplot(211)
         pl.xlabel (" ")
         pl.ylabel (" ")
@@ -245,6 +309,9 @@ if __name__=='__main__':
         ax2.set_ylim(-10,10)
         ax1.text(20,8, "satellite radius (arbitrary units)")
         ax2.text(25,8, "satellite-host size ratio")
+        ax1.text(45,-8, "t = %03d days"%t,fontsize = 8,horizontalalignment='left')
+        ax2.text(45,-8, "t = %03d days"%t,fontsize = 8,horizontalalignment='left')
+
         ax1.yaxis.set_visible(False) 
         ax2.yaxis.set_visible(False) 
 
@@ -252,10 +319,13 @@ if __name__=='__main__':
             sats[s].plotsat(ax1, t,size='radius')
             sats[s].plotsat(ax2, t,size='ratio')
 
-        
-        pl.savefig("satellites.%04d.png"%t)
-    os.system("convert -loop -1 satellites.????.png satellites.gif")
-    os.system("rm satellites.????.png")
+        if options.interactive:
+            pl.draw()
+        else:
+            pl.savefig("satellites.%04d.png"%t)
+    if not options.interactive:
+        os.system("convert -loop -1 satellites.????.png satellites.gif")
+        os.system("rm satellites.????.png")
 
 #    pl.show()
 #    time.sleep(10)
