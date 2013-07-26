@@ -168,7 +168,7 @@ if __name__=='__main__':
     parser = optparse.OptionParser(usage="python plotsatellites.py  ", conflict_handler="resolve")
     parser.add_option('-d','--days', default=1000, type="float",
                       help='days for the timeline of the visualization')
-    parser.add_option('-t','--steps', default=1, type="float",
+    parser.add_option('-t','--steps', default=5, type="float",
                       help='step (in days) for the timeline of the visualization')
     parser.add_option('-i','--interactive', default=False ,action="store_true" ,
                       help='show plots as they are made') 
@@ -289,12 +289,13 @@ if __name__=='__main__':
 
     fig = pl.figure()
     for t in arange(0,timescale, timestep):
+        print "plotting day ",t
         if DEBUG:
             print "plotting day ",t
-        if not options.interactive:
-            fig = pl.figure()
-
+#        if not options.interactive:
+#            fig = pl.figure()
         pl.clf()
+
         ax1 = fig.add_subplot(211)
         pl.xlabel (" ")
         pl.ylabel (" ")
