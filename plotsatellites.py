@@ -17,7 +17,12 @@ planets['neptune']={'a':30.1,'r1':24764 ,'r2':24341 ,'dens':1.638 ,'mag': 7.91,'
 planets['pluto']={'a':39.264 ,'r1':1153,'r2':1153,'dens':2.03,'mag':15,'albedo':0.59, 'color':'#003333'}
 
 HEXDIG = '0123456789abcdefABCDEF'
-HEXDEC = {v: int(v, 16) for v in (x+y for x in HEXDIG for y in HEXDIG)}
+hexvals=[int(v, 16) for v in (x+y for x in HEXDIG for y in HEXDIG)]
+hexkeys=[v for v in (x+y for x in HEXDIG for y in HEXDIG)]
+HEXDEC = {}
+for i in range(len(hexvals)):
+    HEXDEC[hexkeys[i]]=hexvals[i]
+
 
 def rgb(rgbt):
     return (HEXDEC[rgbt[0:2]]/256., HEXDEC[rgbt[2:4]]/256., HEXDEC[rgbt[4:6]]/256.)
