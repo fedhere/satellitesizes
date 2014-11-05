@@ -20,6 +20,7 @@ HEXDIG = '0123456789abcdefABCDEF'
 hexvals=[int(v, 16) for v in (x+y for x in HEXDIG for y in HEXDIG)]
 hexkeys=[v for v in (x+y for x in HEXDIG for y in HEXDIG)]
 HEXDEC = {}
+mybgcolor='Ivory'
 for i in range(len(hexvals)):
     HEXDEC[hexkeys[i]]=hexvals[i]
 
@@ -292,7 +293,7 @@ if __name__=='__main__':
     for s in sats.iterkeys():
         sats[s].theta=random.uniform(0,TWOPI)
 
-    fig = pl.figure()
+    fig = pl.figure(facecolor=mybgcolor)
     for t in arange(0,timescale, timestep):
         print "plotting day ",t
         if DEBUG:
@@ -307,8 +308,9 @@ if __name__=='__main__':
         ax2 = fig.add_subplot(212)
         pl.xlabel ("host semimajos axis (AU)")
         pl.ylabel (" ")
-        
-        
+        rect1,rect2=ax1.patch,ax2.patch
+        rect1.set_facecolor(mybgcolor)
+        rect2.set_facecolor(mybgcolor)
         ax1.set_xlim(-25, 55)
         ax2.set_xlim(-25, 55)
         ax1.set_ylim(-10,10)
@@ -328,7 +330,7 @@ if __name__=='__main__':
         if options.interactive:
             pl.draw()
         else:
-            pl.savefig("satellites.%04d.png"%t)
+            pl.savefig("satellites.%04d.png"%t, facecolor=fig.get_facecolor(), edgecolor='none', dpi=150,)
     if not options.interactive:
         os.system("convert -loop -1 satellites.????.png satellites.gif")
         os.system("rm satellites.????.png")
